@@ -4,7 +4,39 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Semi Avignon — 1h45</title>
+<link rel="apple-touch-icon" id="apple-icon" href="">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Semi 1h45">
+<meta name="theme-color" content="#0a0a0f">
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;800&display=swap" rel="stylesheet">
+<script>
+  (function(){
+    const c = document.createElement('canvas');
+    c.width = 512; c.height = 512;
+    const ctx = c.getContext('2d');
+    ctx.fillStyle = '#0a0a0f';
+    ctx.beginPath();
+    ctx.roundRect(0,0,512,512,80);
+    ctx.fill();
+    ctx.fillStyle = '#c8f55a';
+    ctx.font = 'bold 260px Arial';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('🏃', 256, 256);
+    ctx.fillStyle = '#c8f55a';
+    ctx.font = 'bold 72px Arial';
+    ctx.fillText('1h45', 256, 430);
+    const url = c.toDataURL('image/png');
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('apple-icon').href = url;
+      const link = document.createElement('link');
+      link.rel = 'icon';
+      link.href = url;
+      document.head.appendChild(link);
+    });
+  })();
+</script>
 <style>
   :root {
     --bg: #0a0a0f;
