@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Semi Avignon — 1h45</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #13131a;
+    --surface2: #1c1c26;
+    --border: rgba(255,255,255,0.07);
+    --accent: #c8f55a;
+    --accent2: #5af5c8;
+    --accent3: #f5a05a;
+    --text: #f0f0f0;
+    --muted: #888;
+    --danger: #f55a5a;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body { background: var(--bg); color: var(--text); font-family: 'Syne', sans-serif; min-height: 100vh; overflow-x: hidden; }
+
+  /* Header */
+  .header { padding: 20px 20px 0; display: flex; justify-content: space-between; align-items: flex-start; }
+  .header-title { font-size: 11px; font-weight: 600; letter-spacing: 0.15em; color: var(--muted); text-transform: uppercase; }
+  .header-goal { font-size: 28px; font-weight: 800; color: var(--accent); line-height: 1; margin-top: 4px; }
+  .header-race { font-size: 12px; color: var(--muted); margin-top: 3px; font-family: 'DM Mono', monospace; }
+  .countdown-box { text-align: right; }
+  .countdown-num { font-size: 28px; font-weight: 800; color: var(--text); line-height: 1; font-family: 'DM Mono', monospace; }
+  .countdown-label { font-size: 10px; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; }
+
+  /* Progress bar */
+  .progress-section { padding: 20px 20px 0; }
+  .progress-label { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); margin-bottom: 8px; font-family: 'DM Mono', monospace; }
+  .progress-track { height: 4px; background: var(--surface2); border-radius: 2px; overflow: hidden; }
+  .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent2), var(--accent)); border-radius: 2px; transition: width 0.8s ease; }
+
+  /* Nav tabs */
+  .nav { display: flex; gap: 4px; padding: 16px 20px 0; }
+  .nav-btn { flex: 1; padding: 8px 4px; font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; border: 1px solid var(--border); border-radius: 8px; background: transparent; color: var(--muted); cursor: pointer; font-family: 'Syne', sans-serif; transition: all 0.2s; }
+  .nav-btn.active { background: var(--accent); color: #0a0a0f; border-color: var(--accent); }
+
+  /* Sections */
+  .section { display: none; padding: 16px 20px 100px; }
+  .section.active { display: block; }
+
+  /* Phase cards */
+  .phase-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 16px; margin-bottom: 12px; position: relative; overflow: hidden; cursor: pointer; transition: border-color 0.2s; }
+  .phase-card.current { border-color: var(--accent); }
+  .phase-card.done { opacity: 0.5; }
+  .phase-accent { position: absolute; top: 0; left: 0; width: 3px; height: 100%; border-radius: 3px 0 0 3px; }
+  .phase-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+  .phase-num { font-size: 10px; font-weight: 600; letter-spacing: 0.1em; color: var(--muted); text-transform: uppercase; font-family: 'DM Mono', monospace; }
+  .phase-badge { font-size: 10px; padding: 3px 8px; border-radius: 20px; font-weight: 600; letter-spacing: 0.05em; }
+  .phase-name { font-size: 16px; font-weight: 800; margin-bottom: 4px; }
+  .phase-period { font-size: 11px; color: var(--muted); font-family: 'DM Mono', monospace; margin-bottom: 12px; }
+  .phase-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .stat { background: var(--surface2); border-radius: 8px; padding: 8px; }
+  .stat-label { font-size: 10px; color: var(--muted); margin-bottom: 2px; }
+  .stat-val { font-size: 14px; font-weight: 600; font-family: 'DM Mono', monospace; }
+  .phase-detail { margin-top: 12px; display: none; border-top: 1px solid var(--border); padding-top: 12px; }
+  .phase-detail.open { display: block; }
+  .session-row { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 8px; }
+  .session-dot { width: 6px; height: 6px; border-radius: 50%; margin-top: 5px; flex-shrink: 0; }
+  .session-text { font-size: 13px; line-height: 1.5; }
+  .session-name { font-weight: 600; }
+  .session-desc { color: var(--muted); font-size: 12px; }
+
+  /* Allures */
+  .allures-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 16px; }
+  .allure-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 14px; }
+  .allure-type { font-size: 11px; color: var(--muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.08em; }
+  .allure-pace { font-size: 24px; font-weight: 800; font-family: 'DM Mono', monospace; line-height: 1; }
+  .allure-unit { font-size: 11px; color: var(--muted); margin-top: 3px; }
+  .allure-desc { font-size: 11px; color: var(--muted); margin-top: 6px; line-height: 1.4; }
+
+  /* Semaine type */
+  .week-title { font-size: 13px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 12px; }
+  .day-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; margin-bottom: 8px; display: flex; align-items: center; gap: 12px; }
+  .day-label { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; min-width: 32px; font-family: 'DM Mono', monospace; }
+  .day-content { flex: 1; }
+  .day-name { font-size: 14px; font-weight: 600; }
+  .day-info { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .day-tag { font-size: 10px; padding: 3px 8px; border-radius: 20px; font-weight: 600; white-space: nowrap; }
+
+  /* Règles */
+  .rule-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 16px; margin-bottom: 10px; }
+  .rule-num { font-size: 32px; font-weight: 800; color: var(--border); font-family: 'DM Mono', monospace; line-height: 1; margin-bottom: 6px; }
+  .rule-title { font-size: 15px; font-weight: 800; margin-bottom: 6px; }
+  .rule-desc { font-size: 13px; color: var(--muted); line-height: 1.6; }
+  .rule-highlight { color: var(--accent); font-weight: 600; }
+
+  /* Bottom padding safe area */
+  @supports (padding-bottom: env(safe-area-inset-bottom)) {
+    .section { padding-bottom: calc(100px + env(safe-area-inset-bottom)); }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div class="header-title">Objectif course</div>
+    <div class="header-goal">1h45</div>
+    <div class="header-race">Semi · Avignon · 27 sept 2026</div>
+  </div>
+  <div class="countdown-box">
+    <div class="countdown-num" id="days-count">—</div>
+    <div class="countdown-label">jours restants</div>
+  </div>
+</div>
+
+<div class="progress-section">
+  <div class="progress-label">
+    <span>Montpellier terminé</span>
+    <span id="progress-pct">0%</span>
+  </div>
+  <div class="progress-track">
+    <div class="progress-fill" id="progress-fill" style="width:0%"></div>
+  </div>
+</div>
+
+<div class="nav">
+  <button class="nav-btn active" onclick="showTab('plan')">Plan</button>
+  <button class="nav-btn" onclick="showTab('allures')">Allures</button>
+  <button class="nav-btn" onclick="showTab('semaine')">Semaine</button>
+  <button class="nav-btn" onclick="showTab('regles')">Règles</button>
+</div>
+
+<!-- PLAN -->
+<div class="section active" id="tab-plan">
+
+  <div class="phase-card done" onclick="togglePhase(this)">
+    <div class="phase-accent" style="background:#888"></div>
+    <div class="phase-header">
+      <div class="phase-num">Phase 0</div>
+      <span class="phase-badge" style="background:rgba(136,136,136,0.15);color:#888">terminée</span>
+    </div>
+    <div class="phase-name">Montpellier</div>
+    <div class="phase-period">19 avril 2026</div>
+    <div class="phase-stats">
+      <div class="stat"><div class="stat-label">Objectif</div><div class="stat-val" style="color:#888">1h52</div></div>
+      <div class="stat"><div class="stat-label">Parcours</div><div class="stat-val" style="color:#888">Plat</div></div>
+      <div class="stat"><div class="stat-label">D+</div><div class="stat-val" style="color:#888">123m</div></div>
+    </div>
+  </div>
+
+  <div class="phase-card current" onclick="togglePhase(this)">
+    <div class="phase-accent" style="background:var(--accent2)"></div>
+    <div class="phase-header">
+      <div class="phase-num">Phase 1</div>
+      <span class="phase-badge" style="background:rgba(90,245,200,0.15);color:var(--accent2)">en cours</span>
+    </div>
+    <div class="phase-name">Récupération & base</div>
+    <div class="phase-period">Fin avril → fin mai · 4 semaines</div>
+    <div class="phase-stats">
+      <div class="stat"><div class="stat-label">Volume</div><div class="stat-val" style="color:var(--accent2)">20→28</div></div>
+      <div class="stat"><div class="stat-label">Séances</div><div class="stat-val" style="color:var(--accent2)">3–4</div></div>
+      <div class="stat"><div class="stat-label">Fractionné</div><div class="stat-val" style="color:var(--accent2)">aucun</div></div>
+    </div>
+    <div class="phase-detail">
+      <div class="session-row">
+        <div class="session-dot" style="background:var(--accent2)"></div>
+        <div class="session-text"><div class="session-name">2–3 footings faciles</div><div class="session-desc">6:00–6:20/km · 6 à 8 km · Récupération post-Montpellier</div></div>
+      </div>
+      <div class="session-row">
+        <div class="session-dot" style="background:var(--accent2)"></div>
+        <div class="session-text"><div class="session-name">1 sortie longue</div><div class="session-desc">12 à 16 km · allure 6:10/km · Reconstruire l'endurance</div></div>
+      </div>
+      <div class="session-row">
+        <div class="session-dot" style="background:var(--muted)"></div>
+        <div class="session-text"><div class="session-name">Pas de fractionné</div><div class="session-desc">Laisser le corps récupérer complètement de Montpellier</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="phase-card" onclick="togglePhase(this)">
+    <div class="phase-accent" style="background:#7F77DD"></div>
+    <div class="phase-header">
+      <div class="phase-num">Phase 2</div>
+      <span class="phase-badge" style="background:rgba(127,119,221,0.15);color:#7F77DD">à venir</span>
+    </div>
+    <div class="phase-name">Construction & fractionné</div>
+    <div class="phase-period">Juin → mi-juillet · 6 semaines</div>
+    <div class="phase-stats">
+      <div class="stat"><div class="stat-label">Volume</div><div class="stat-val" style="color:#7F77DD">28→35</div></div>
+      <div class="stat"><div class="stat-label">Séances</div><div class="stat-val" style="color:#7F77DD">4</div></div>
+      <div class="stat"><div class="stat-label">Fractionné</div><div class="stat-val" style="color:#7F77DD">1/sem</div></div>
+    </div>
+    <div class="phase-detail">
+      <div class="session-row">
+        <div class="session-dot" style="background:#7F77DD"></div>
+        <div class="session-text"><div class="session-name">Fractionné court</div><div class="session-desc">6 × 1 km à 4:45/km · récup 2 min · Introduction progressive</div></div>
+      </div>
+      <div class="session-row">
+        <div class="session-dot" style="background:#7F77DD"></div>
+        <div class="session-text"><div class="session-name">Sortie longue</div><div class="session-desc">16 à 19 km · 6:00/km · Montée progressive du volume</div></div>
+      </div>
+      <div class="session-row">
+        <div class="session-dot" style="background:#7F77DD"></div>
+        <div class="session-text"><div class="session-name">Séance tempo</div><div class="session-desc">20–30 min à 5:05/km · Travail au seuil lactique</div></div>
+      </div>
+      <div class="session-row">
+        <div class="session-dot" style="background:var(--muted)"></div>
+        <div class="session-text"><div class="session-name">2 footings</div><div class="session-desc">8–10 km facile · dont 1 avec strides en fin de sortie</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="phase-card" onclick="togglePhase(this)">
+    <div class="phase-accent" style="background:var(--accent)"></div>
+    <div class="phase-header">
+      <div class="phase-num">Phase 3</div>
+      <span class="phase-badge" style="background:rgba(200,245,90,0.15);color:var(--accent)">à venir</span>
+    </div>
+    <div class="phase-name">Spécificité & intensité</div>
+    <div class="phase-period">Mi-juillet → fin août · 6 semaines</div>
+    <div class="phase-stats">
+      <div class="stat"><div class="stat-label">Volume</div><div class="stat-val" style="color:var(--accent)">32→38</div></div>
+      <div class="stat"><div class="stat-label">Séances</div><div class="stat-val" style="color:var(--accent)">4–5</div></div>
+      <div class="stat"><div class="stat-label">Fractionné</div><div class="stat-val" style="color:var(--accent)">2/sem</div></div>
+    </div>
+    <div class="phase-detail">
+      <div class="session-row">
+        <div class="session-dot" style="background:var(--accent)"></div>
+        <div class="session-text"><div class="session-name">Fractionné long</div><div class="session-desc">4 × 2 km à 4:55/km · récup 3 min · Travail allure semi</div></div>
+      </div>
+      <div class="session-row">
+        <div class="session-dot" style="background:var(--accent)"></div>
+        <div class="session-text"><div class="session-name">Sortie longue spécifique</div><div class="session-desc">19 km dont 8–10 km à 5:05/km · Simulation fin de course</div></div>
+      </div>
+      <div class="session-row">
+        <div class="session-dot" style="background:var(--accent)"></div>
+        <div class="session-text"><div class="session-name">Séance seuil clé</div><div class="session-desc">3 × 3 km à 5:00/km · récup 3 min · Cœur du plan</div></div>
+      </div>
+      <div class="session-row">
+        <div class="session-dot" style="background:var(--muted)"></div>
+        <div class="session-text"><div class="session-name">1–2 footings</div><div class="session-desc">8 km facile · récupération active entre séances</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="phase-card" onclick="togglePhase(this)">
+    <div class="phase-accent" style="background:var(--accent3)"></div>
+    <div class="phase-header">
+      <div class="phase-num">Phase 4</div>
+      <span class="phase-badge" style="background:rgba(245,160,90,0.15);color:var(--accent3)">à venir</span>
+    </div>
+    <div class="phase-name">Affûtage</div>
+    <div class="phase-period">Septembre · 4 semaines</div>
+    <div class="phase-stats">
+      <div class="stat"><div class="stat-label">Volume</div><div class="stat-val" style="color:var(--accent3)">25→12</div></div>
+      <div class="stat"><div class="stat-label">Séances</div><div class="stat-val" style="color:var(--accent3)">3→2</div></div>
+      <div class="stat"><div class="stat-label">Fractionné</div><div class="stat-val" style="color:var(--accent3)">1→0</div></div>
+    </div>
+    <div class="phase-detail">
+      <div class="session-row">
+        <div class="session-dot" style="background:var(--accent3)"></div>
+        <div class="session-text"><div class="session-name">Semaines 1–2</div><div class="session-desc">Volume -20% · Conserver 1 séance intense · Dernière longue 16 km</div></div>
+      </div>
+      <div class="session-row">
+        <div class="session-dot" style="background:var(--accent3)"></div>
+        <div class="session-text"><div class="session-name">Semaines 3–4</div><div class="session-desc">Volume -40% · Footings légers · 4–5 accélérations · Repos J-2 J-1</div></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ALLURES -->
+<div class="section" id="tab-allures">
+  <div class="allures-grid">
+    <div class="allure-card" style="border-color:rgba(90,245,200,0.3)">
+      <div class="allure-type">Footing facile</div>
+      <div class="allure-pace" style="color:var(--accent2)">6:00</div>
+      <div class="allure-unit">min/km</div>
+      <div class="allure-desc">Tu dois pouvoir parler en phrases. Jamais essoufflé.</div>
+    </div>
+    <div class="allure-card" style="border-color:rgba(127,119,221,0.3)">
+      <div class="allure-type">Seuil / tempo</div>
+      <div class="allure-pace" style="color:#7F77DD">5:05</div>
+      <div class="allure-unit">min/km</div>
+      <div class="allure-desc">Effort contrôlé. Phrases courtes possibles. Clé du plan.</div>
+    </div>
+    <div class="allure-card" style="border-color:rgba(200,245,90,0.3)">
+      <div class="allure-type">Allure semi cible</div>
+      <div class="allure-pace" style="color:var(--accent)">4:59</div>
+      <div class="allure-unit">min/km</div>
+      <div class="allure-desc">Objectif 1h45. À répéter en phase 3 pour mémoriser la sensation.</div>
+    </div>
+    <div class="allure-card" style="border-color:rgba(245,160,90,0.3)">
+      <div class="allure-type">Fractionné</div>
+      <div class="allure-pace" style="color:var(--accent3)">4:45</div>
+      <div class="allure-unit">min/km</div>
+      <div class="allure-desc">Effort intense mais contrôlé. Récup complète entre les répétitions.</div>
+    </div>
+    <div class="allure-card" style="border-color:rgba(136,136,136,0.2)">
+      <div class="allure-type">Sortie longue</div>
+      <div class="allure-pace" style="color:var(--muted)">6:10</div>
+      <div class="allure-unit">min/km</div>
+      <div class="allure-desc">Très lent, c'est voulu. L'endurance se construit à basse intensité.</div>
+    </div>
+    <div class="allure-card" style="border-color:rgba(245,90,90,0.3)">
+      <div class="allure-type">Objectif B</div>
+      <div class="allure-pace" style="color:var(--danger)">5:13</div>
+      <div class="allure-unit">min/km</div>
+      <div class="allure-desc">Sub-1h50 garanti si le plan est respecté. Ton plancher.</div>
+    </div>
+  </div>
+
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:12px;">
+    <div style="font-size:13px;color:var(--muted);margin-bottom:12px;text-transform:uppercase;letter-spacing:0.08em;font-weight:600;">Progression attendue</div>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
+      <div style="font-size:12px;color:var(--muted);min-width:80px;font-family:'DM Mono',monospace;">Montpellier</div>
+      <div style="flex:1;height:3px;background:var(--surface2);border-radius:2px;overflow:hidden;"><div style="width:60%;height:100%;background:#888;border-radius:2px;"></div></div>
+      <div style="font-size:13px;font-weight:600;font-family:'DM Mono',monospace;min-width:36px;">1h52</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
+      <div style="font-size:12px;color:var(--muted);min-width:80px;font-family:'DM Mono',monospace;">Objectif B</div>
+      <div style="flex:1;height:3px;background:var(--surface2);border-radius:2px;overflow:hidden;"><div style="width:75%;height:100%;background:var(--danger);border-radius:2px;"></div></div>
+      <div style="font-size:13px;font-weight:600;font-family:'DM Mono',monospace;min-width:36px;">1h50</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <div style="font-size:12px;color:var(--muted);min-width:80px;font-family:'DM Mono',monospace;">Objectif A</div>
+      <div style="flex:1;height:3px;background:var(--surface2);border-radius:2px;overflow:hidden;"><div style="width:100%;height:100%;background:var(--accent);border-radius:2px;"></div></div>
+      <div style="font-size:13px;font-weight:600;font-family:'DM Mono',monospace;color:var(--accent);min-width:36px;">1h45</div>
+    </div>
+  </div>
+</div>
+
+<!-- SEMAINE TYPE -->
+<div class="section" id="tab-semaine">
+  <div style="display:flex;gap:8px;margin-bottom:16px;">
+    <button class="nav-btn active" style="flex:none;padding:6px 14px;font-size:10px;" onclick="showWeek(this,'w1')">Phase 1</button>
+    <button class="nav-btn" style="flex:none;padding:6px 14px;font-size:10px;" onclick="showWeek(this,'w2')">Phase 2</button>
+    <button class="nav-btn" style="flex:none;padding:6px 14px;font-size:10px;" onclick="showWeek(this,'w3')">Phase 3</button>
+    <button class="nav-btn" style="flex:none;padding:6px 14px;font-size:10px;" onclick="showWeek(this,'w4')">Affûtage</button>
+  </div>
+
+  <div id="week-w1">
+    <div class="week-title">Phase 1 — semaine type</div>
+    <div class="day-card">
+      <div class="day-label">Lun</div>
+      <div class="day-content"><div class="day-name">Repos</div><div class="day-info">Récupération complète</div></div>
+      <span class="day-tag" style="background:rgba(136,136,136,0.15);color:#888">repos</span>
+    </div>
+    <div class="day-card">
+      <div class="day-label">Mar</div>
+      <div class="day-content"><div class="day-name">Footing facile</div><div class="day-info">6 km · 6:10/km</div></div>
+      <span class="day-tag" style="background:rgba(90,245,200,0.15);color:var(--accent2)">facile</span>
+    </div>
+    <div class="day-card">
+      <div class="day-label">Mer</div>
+      <div class="day-content"><div class="day-name">Repos</div><div class="day-info">Ou marche 30 min</div></div>
+      <span class="day-tag" style="background:rgba(136,136,136,0.15);color:#888">repos</span>
+    </div>
+    <div class="day-card">
+      <div class="day-label">Jeu</div>
+      <div class="day-content"><div class="day-name">Footing facile</div><div class="day-info">8 km · 6:00/km</div></div>
+      <span class="day-tag" style="background:rgba(90,245,200,0.15);color:var(--accent2)">facile</span>
+    </div>
+    <div class="day-card">
+      <div class="day-label">Ven</div>
+      <div class="day-content"><div class="day-name">Repos</div><div class="day-info">Récupération</div></div>
+      <span class="day-tag" style="background:rgba(136,136,136,0.15);color:#888">repos</span>
+    </div>
+    <div class="day-card">
+      <div class="day-label">Sam</div>
+      <div class="day-content"><div class="day-name">Sortie longue</div><div class="day-info">14 km · 6:10/km</div></div>
+      <span class="day-tag" style="background:rgba(90,245,200,0.15);color:var(--accent2)">longue</span>
+    </div>
+    <div class="day-card">
+      <div class="day-label">Dim</div>
+      <div class="day-content"><div class="day-name">Repos</div><div class="day-info">Récupération active</div></div>
+      <span class="day-tag" style="background:rgba(136,136,136,0.15);color:#888">repos</span>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px;margin-top:8px;display:flex;justify-content:space-between;">
+      <div style="font-size:12px;color:var(--muted)">Volume semaine</div>
+      <div style="font-size:14px;font-weight:600;font-family:'DM Mono',monospace;color:var(--accent2)">~28 km</div>
+    </div>
+  </div>
+
+  <div id="week-w2" style="display:none">
+    <div class="week-title">Phase 2 — semaine type</div>
+    <div class="day-card">
+      <div class="day-label">Lun</div>
+      <div class="day-content"><div class="day-name">Repos</div><div class="day-info">Récupération</div></div>
+      <span class="day-tag" style="background:rgba(136,136,136,0.15);color:#888">repos</span>
+    </div>
+    <div class="day-card">
+      <div class="day-label">Mar</div>
+      <div class="day-content"><div class="day-name">Fractionné court</div><div class="day-info">6 × 1 km à 4:45/km · récup 2 min</div></div>
+      <span class="day-tag" style="background:rgba(127,119,221,0.15);color:#7F77DD">intensif</span>
+    </div>
+    <div class="day-card">
+      <div class="day-label">Mer</div>
+      <div class="day-content"><div class="day-name">Footing récup</div><div class="day-info">7 km · 6:20/km · très facile</div></div>
+      <span class="day-tag" style="background:rgba(90,245,200,0.15);color:var(--accent2)">facile</span>
+    </div>
+    <div class="day-card">
+      <div class="day-label">Jeu</div>
+      <div class="day-content"><div class="day-name">Tempo</div><div class="day-info">25 min à 5:05/km + échauff/retour</div></div>
+      <span class="day-tag" style="background:rgba(127,119,221,0.15);color:#7F77DD">seuil</span>
+    </div>
+    <div class="day-card">
+      <div class="day-label">Ven</div>
+      <div class="day-content"><div class="day-name">Repos</div><div class="day-info">Récupération avant longue</div></div>
+      <span class="day-tag" style="background:rgba(136,136,136,0.15);color:#888">repos</span>
+    </div>
+    <div class="day-card">
+      <div class="day-label">Sam</div>
+      <div class="day-content"><div class="day-name">Sortie longue</div><div class="day-info">18 km · 6:00/km</div></div>
+      <span class="day-tag" style="background:rgba(127,119,221,0.15);color:#7F77DD">longue</span>
+    </div>
+    <div class="day-card">
+      <div class="day-label">Dim</div>
+      <div class="day-content"><div class="day-name">Footing + strides</div><div class="day-info">8 km · 6:00/km + 6 × 20s rapide</div></div>
+      <span class="day-tag" style="background:rgba(90,245,200,0.15);color:var(--accent2)">facile</span>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px;margin-top:8px;display:flex;justify-content:space-between;">
+      <div style="font-size:12px;color:var(--muted)">Volume semaine</div>
+      <div style="font-size:14px;font-weight:600;font-family:'DM Mono',monospace;color:#7F77DD">~35 km</div>
+    </div>
+  </div>
+
+  <div id="week-w3" style="display:none">
+    <div class="week-title">Phase 3 — semaine type</div>
+    <div class="day-card">
+      <div class="day-label">Lun</div>
+      <div class="day-content"><div class="day-name">Repos</div><div class="day-info">Récupération</div></div>
+      <span class="day-tag" style="background:rgba(136,136,136,0.15);color:#888">repos</span>
+    </div>
+    <div class="day-card">
+      <div class="day-label">Mar</div>
+      <div class="day-content"><div class="day-name">Séance seuil clé</div><div class="day-info">3 × 3 km à 5:00/km · récup 3 min</div></div>
+      <span class="day-tag" style="background:rgba(200,245,90,0.15);color:var(--accent)">seuil</span>
+    </div>
+    <div class="day-card">
+      <div class="day-label">Mer</div>
+      <div class="day-content"><div class="day-name">Footing récup</div><div class="day-info">8 km · 6:15/km</div></div>
+      <span class="day-tag" style="background:rgba(90,245,200,0.15);color:var(--accent2)">facile</span>
+    </div>
+    <div class="day-card">
+      <div class="day-label">Jeu</div>
+      <div class="day-content"><div class="day-name">Fractionné long</div><div class="day-info">4 × 2 km à 4:55/km · récup 3 min</div></div>
+      <span class="day-tag" style="background:rgba(200,245,90,0.15);color:var(--accent)">intensif</span>
+    </div>
+    <div class="day-card">
+      <div class="day-label">Ven</div>
+      <div class="day-content"><div class="day-name">Repos</div><div class="day-info">Récupération avant longue</div></div>
+      <span class="day-tag" style="background:rgba(136,136,136,0.15);color:#888">repos</span>
+    </div>
+    <div class="day-card">
+      <div class="day-label">Sam</div>
+      <div class="day-content"><div class="day-name">Longue spécifique</div><div class="day-info">19 km dont 10 km à 5:05/km</div></div>
+      <span class="day-tag" style="background:rgba(200,245,90,0.15);color:var(--accent)">longue</span>
+    </div>
+    <div class="day-card">
+      <div class="day-label">Dim</div>
+      <div class="day-content"><div class="day-name">Footing facile</div><div class="day-info">8 km · 6:10/km</div></div>
+      <span class="day-tag" style="background:rgba(90,245,200,0.15);color:var(--accent2)">facile</span>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px;margin-top:8px;display:flex;justify-content:space-between;">
+      <div style="font-size:12px;color:var(--muted)">Volume semaine</div>
+      <div style="font-size:14px;font-weight:600;font-family:'DM Mono',monospace;color:var(--accent)">~38 km</div>
+    </div>
+  </div>
+
+  <div id="week-w4" style="display:none">
+    <div class="week-title">Affûtage — semaine J-10</div>
+    <div class="day-card">
+      <div class="day-label">Lun</div>
+      <div class="day-content"><div class="day-name">Repos</div><div class="day-info">Récupération</div></div>
+      <span class="day-tag" style="background:rgba(136,136,136,0.15);color:#888">repos</span>
+    </div>
+    <div class="day-card">
+      <div class="day-label">Mar</div>
+      <div class="day-content"><div class="day-name">Footing facile</div><div class="day-info">6 km · 6:10/km</div></div>
+      <span class="day-tag" style="background:rgba(245,160,90,0.15);color:var(--accent3)">léger</span>
+    </div>
+    <div class="day-card">
+      <div class="day-label">Mer</div>
+      <div class="day-content"><div class="day-name">Repos</div><div class="day-info">Récupération</div></div>
+      <span class="day-tag" style="background:rgba(136,136,136,0.15);color:#888">repos</span>
+    </div>
+    <div class="day-card">
+      <div class="day-label">Jeu</div>
+      <div class="day-content"><div class="day-name">Sortie avec allure</div><div class="day-info">8 km · 3 km à 4:59/km</div></div>
+      <span class="day-tag" style="background:rgba(245,160,90,0.15);color:var(--accent3)">clé</span>
+    </div>
+    <div class="day-card">
+      <div class="day-label">Ven</div>
+      <div class="day-content"><div class="day-name">Footing court</div><div class="day-info">5 km · + 4 accélérations 20s</div></div>
+      <span class="day-tag" style="background:rgba(245,160,90,0.15);color:var(--accent3)">léger</span>
+    </div>
+    <div class="day-card">
+      <div class="day-label">Sam</div>
+      <div class="day-content"><div class="day-name">Repos complet</div><div class="day-info">J-2 · Préparer logistique</div></div>
+      <span class="day-tag" style="background:rgba(136,136,136,0.15);color:#888">repos</span>
+    </div>
+    <div class="day-card">
+      <div class="day-label">Dim</div>
+      <div class="day-content"><div class="day-name">Repos complet</div><div class="day-info">J-1 · Glucides, sommeil</div></div>
+      <span class="day-tag" style="background:rgba(136,136,136,0.15);color:#888">repos</span>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px;margin-top:8px;display:flex;justify-content:space-between;">
+      <div style="font-size:12px;color:var(--muted)">Volume semaine</div>
+      <div style="font-size:14px;font-weight:600;font-family:'DM Mono',monospace;color:var(--accent3)">~19 km</div>
+    </div>
+  </div>
+</div>
+
+<!-- RÈGLES -->
+<div class="section" id="tab-regles">
+  <div class="rule-card">
+    <div class="rule-num">01</div>
+    <div class="rule-title">80% de tes km doivent être faciles</div>
+    <div class="rule-desc">La règle d'or du running. Seuls <span class="rule-highlight">20% des séances</span> sont intenses. Si tu te sens bien, résiste à l'envie d'accélérer les footings faciles — tu sabotes ta récupération.</div>
+  </div>
+  <div class="rule-card">
+    <div class="rule-num">02</div>
+    <div class="rule-title">Ne jamais enchaîner 2 séances intenses</div>
+    <div class="rule-desc">Toujours un footing facile ou un repos entre deux séances de fractionné ou seuil. <span class="rule-highlight">La progression se fait pendant la récupération</span>, pas pendant l'effort.</div>
+  </div>
+  <div class="rule-card">
+    <div class="rule-num">03</div>
+    <div class="rule-title">Augmenter le volume de max 10% par semaine</div>
+    <div class="rule-desc">La règle des 10%. Au-delà, le risque de blessure <span class="rule-highlight">augmente exponentiellement</span>. Si tu rates une semaine, reprends où tu étais, ne rattrape pas.</div>
+  </div>
+  <div class="rule-card">
+    <div class="rule-num">04</div>
+    <div class="rule-title">La sortie longue se court lentement</div>
+    <div class="rule-desc">Minimum <span class="rule-highlight">45–60 sec/km plus lent</span> que ton allure semi. Si tu pars à 5:30/km sur ta longue, tu transformes une séance d'endurance en séance de tempo — et tu rates l'adaptation.</div>
+  </div>
+  <div class="rule-card">
+    <div class="rule-num">05</div>
+    <div class="rule-title">L'affûtage fait peur — c'est normal</div>
+    <div class="rule-desc">Les 2 dernières semaines tu vas te sentir mou, lent, en perte de forme. C'est <span class="rule-highlight">exactement le signe que ça marche</span>. Tes muscles se rechargent. Ne rajoute pas de km.</div>
+  </div>
+  <div class="rule-card">
+    <div class="rule-num">06</div>
+    <div class="rule-title">Une semaine ratée ne casse pas un plan</div>
+    <div class="rule-desc">Maladie, travail, fatigue — ça arrive. <span class="rule-highlight">Reprends simplement</span> à la semaine suivante sans culpabilité ni rattrapage. Ce qui compte c'est la tendance sur 5 mois, pas une semaine.</div>
+  </div>
+</div>
+
+<script>
+  function showTab(name) {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('tab-' + name).classList.add('active');
+    event.target.classList.add('active');
+  }
+
+  function togglePhase(card) {
+    const detail = card.querySelector('.phase-detail');
+    if (detail) detail.classList.toggle('open');
+  }
+
+  function showWeek(btn, id) {
+    document.querySelectorAll('[id^="week-"]').forEach(w => w.style.display = 'none');
+    document.getElementById('week-' + id).style.display = 'block';
+    btn.closest('div').querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  }
+
+  function updateCountdown() {
+    const race = new Date('2026-09-27T08:00:00');
+    const now = new Date();
+    const diff = Math.ceil((race - now) / (1000 * 60 * 60 * 24));
+    document.getElementById('days-count').textContent = diff > 0 ? diff : '0';
+
+    const start = new Date('2026-04-19');
+    const total = race - start;
+    const elapsed = now - start;
+    const pct = Math.min(100, Math.max(0, Math.round(elapsed / total * 100)));
+    document.getElementById('progress-pct').textContent = pct + '%';
+    document.getElementById('progress-fill').style.width = pct + '%';
+  }
+
+  updateCountdown();
+</script>
+</body>
+</html>
